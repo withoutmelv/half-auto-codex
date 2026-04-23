@@ -1,0 +1,29 @@
+{
+  "name": "codex-queue-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist-electron/main/main.js",
+  "scripts": {
+    "dev": "npm run build:main && concurrently -k \"vite --host 127.0.0.1 --port 5188 --strictPort\" \"tsc -p tsconfig.main.json --watch\" \"wait-on http://127.0.0.1:5188 dist-electron/main/main.js dist-electron/preload.js && ELECTRON_RENDERER_URL=http://127.0.0.1:5188 electron .\"",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run build:main && vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.main.json --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "concurrently": "latest",
+    "electron": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "wait-on": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "vitest": "latest"
+  }
+}
