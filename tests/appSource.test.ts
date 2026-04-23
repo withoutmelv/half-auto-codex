@@ -85,6 +85,8 @@ test("App source keeps only global actions in the top toolbar", () => {
 test("App source exposes system cache cleanup from the toolbar", () => {
   expect(appSource).toContain("clearingCache");
   expect(appSource).toContain("handleClearSystemCache");
+  expect(appSource).toContain('typeof window.codexQueue.clearSystemCache !== "function"');
+  expect(appSource).toContain("清理缓存接口未加载，请重启应用后再试。");
   expect(appSource).toContain("window.codexQueue.clearSystemCache");
   expect(preloadSource).toContain("queue:clear-system-cache");
   expect(sharedTypesSource).toContain("clearSystemCache");

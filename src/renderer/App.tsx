@@ -305,6 +305,11 @@ export default function App() {
   }
 
   async function handleClearSystemCache(): Promise<void> {
+    if (typeof window.codexQueue.clearSystemCache !== "function") {
+      setError("清理缓存接口未加载，请重启应用后再试。");
+      return;
+    }
+
     setClearingCache(true);
     setError("");
     setNotice("");
