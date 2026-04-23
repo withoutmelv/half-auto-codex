@@ -15,7 +15,8 @@
 - 严格串行执行
 - 前一任务退出码为 `0` 时自动推进下一项
 - 前一任务退出码非 `0` 时停止整个队列
-- 支持 `Start Queue`、`Run Selected`、`Stop`、`Retry`、`Skip`
+- 支持 `启动队列`、`停止队列`、自动保存、浅色/深色主题切换
+- 支持清理系统缓存，移除无效运行目录、过期历史运行产物和旧版残留临时文件
 - 保存 stdout、stderr、退出码和元数据
 
 ## 技术栈
@@ -99,14 +100,14 @@ npm run typecheck
   - `profile`
   - `fullAuto`
 
-### 2. 保存队列
+### 2. 自动保存
 
-点击 `Save Queue` 会把当前队列保存到本地应用数据目录。
+编辑任务、调整顺序、添加或删除任务后，应用会自动把当前队列保存到本地应用数据目录。
 
 ### 3. 启动执行
 
-- `Start Queue`：从队列头开始串行执行
-- `Run Selected`：只执行当前选中的任务
+- `启动队列`：从队列头开始串行执行
+- `停止队列`：终止当前任务并停止队列
 
 ### 4. 队列行为
 
@@ -114,9 +115,17 @@ npm run typecheck
 - 当前任务完成前，不会启动后续任务
 - 退出码 `0`：标记为 `succeeded`，继续下一项
 - 非 `0`：标记为 `failed`，整个队列停止
-- `Stop`：终止当前任务并停止队列
-- `Retry`：从当前任务重新开始
-- `Skip`：跳过当前失败任务
+- 执行中不能编辑任务，也不能清理缓存
+
+### 5. 清理缓存
+
+点击顶部工具栏的 `清理缓存` 会清理 Electron `userData` 目录下由本应用生成的运行历史数据：
+
+- 删除缺少 `stdout.log`、`stderr.log` 或 `meta.json` 的无效运行目录
+- 每个任务默认只保留最近 `20` 次有效运行产物，删除更旧的运行目录
+- 从保留的运行目录中移除旧版残留文件：`prompt.txt`、`events.jsonl`、`last-message.txt`、`stdout.log.pipe`、`stderr.log.pipe`
+
+清理不会删除 `queues/*.json` 队列配置，也不会删除最新保留运行目录里的 `stdout.log`、`stderr.log`、`meta.json`、`run.sh`、`exit-code.txt`、`codex.pid`。
 
 ## Prompt 组装方式
 
@@ -135,7 +144,7 @@ cd <cwd> && codex exec --full-auto --skip-git-repo-check '<instruction>计划文
 
 不会生成或通过 stdin 传递 `prompt.txt`；应用会通过 `run.sh` 包装 `codex exec`，以便记录 stdout、stderr、退出码和 PID，并保持严格串行执行。
 
-运行历史会按队列和任务落盘；每个任务默认只保留最近 `20` 次运行产物，旧运行目录会自动清理。旧版遗留的 `prompt.txt`、`events.jsonl`、`last-message.txt` 和残留 `.pipe` 文件也会在清理时移除。
+运行历史会按队列和任务落盘；每个任务默认只保留最近 `20` 次运行产物，旧运行目录会自动清理。旧版遗留的 `prompt.txt`、`events.jsonl`、`last-message.txt` 和残留 `.pipe` 文件也会在创建新运行产物或点击 `清理缓存` 时移除。
 
 示例命令：
 
@@ -155,18 +164,35 @@ cd /Users/withoutmelv/work/half-auto-codex && codex exec --full-auto --skip-git-
 
 运行数据保存在 Electron 的 `app.getPath("userData")` 目录下。
 
+当前 macOS 开发环境中，实际目录为：
+
+```text
+/Users/withoutmelv/Library/Application Support/codex-queue-desktop
+```
+
+因此当前队列和运行历史目录分别是：
+
+```text
+/Users/withoutmelv/Library/Application Support/codex-queue-desktop/queues
+/Users/withoutmelv/Library/Application Support/codex-queue-desktop/runs
+```
+
 目录结构大致如下：
 
 ```text
-queues/
-  <queue-id>.json
-runs/
-  <queue-id>/
-    <job-id>/
-      <run-id>/
-        stdout.log
-        stderr.log
-        meta.json
+<userData>/
+  queues/
+    <queue-id>.json
+  runs/
+    <queue-id>/
+      <job-id>/
+        <run-id>/
+          stdout.log
+          stderr.log
+          meta.json
+          run.sh
+          exit-code.txt
+          codex.pid
 ```
 
 ## 关键文件
